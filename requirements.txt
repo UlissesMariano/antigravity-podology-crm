@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+pydantic
+# sqlite3 is part of the Python Standard Library, no need to include it here.

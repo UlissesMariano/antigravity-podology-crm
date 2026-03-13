@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podology CRM - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="background-bubbles">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="logo">
+            <i class="fa-solid fa-leaf"></i>
+            <h2>PodoCRM</h2>
+        </div>
+
+        <div class="user-profile">
+            <div class="user-info">
+                <span id="user-greeting" style="font-weight: 500; font-size: 0.95rem;">Olá, Doutor(a)</span>
+            </div>
+            <button id="logout-btn" class="btn btn-danger btn-sm" style="padding: 0.5rem 1rem;">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair
+            </button>
+        </div>
+    </header>
+
+    <div class="nav-tabs-container">
+        <div class="container">
+            <div class="nav-tabs">
+                <button class="tab-btn active" data-tab="tab-agendamento">
+                    <i class="fa-solid fa-calendar-plus"></i> Agendamento
+                </button>
+                <button class="tab-btn" data-tab="tab-clientes">
+                    <i class="fa-solid fa-users"></i> Meus Clientes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
+        <!-- Tab 1: Agendamento -->
+        <div id="tab-agendamento" class="tab-pane active">
+            <div class="dashboard-grid">
+                <!-- Left Column: Add Client Form -->
+                <aside>
+                    <div class="glass-card">
+                        <h3 class="section-title">
+                            <i class="fa-solid fa-user-plus"></i> Novo Agendamento
+                        </h3>
+
+                        <form id="add-client-form">
+                            <div class="input-group">
+                                <label for="client-name">Nome Completo</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-regular fa-user"></i>
+                                    <input type="text" id="client-name" placeholder="Ex: Maria Oliveira" required>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="client-phone">Telefone</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-phone"></i>
+                                    <input type="tel" id="client-phone" placeholder="Ex: (11) 98888-7777" required>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="client-email">E-mail (Opcional)</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-regular fa-envelope"></i>
+                                    <input type="email" id="client-email" placeholder="Ex: maria@email.com">
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="client-anamnese">Anamnese / Motivo da Consulta</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-notes-medical" style="top: 1rem;"></i>
+                                    <textarea id="client-anamnese"
+                                        placeholder="Ex: Unha encravada no pé esquerdo há 3 dias..."
+                                        style="width: 100%; padding: 0.85rem 1rem 0.85rem 2.8rem; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; background: rgba(255,255,255,0.7); outline: none;"
+                                        required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="client-date-time">Data e Hora da Consulta</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <input type="datetime-local" id="client-date-time" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">
+                                Salvar Agendamento <i class="fa-solid fa-check"></i>
+                            </button>
+                        </form>
+                    </div>
+                </aside>
+
+                <!-- Right Column: Calendar -->
+                <section>
+                    <div class="glass-card" style="min-height: 500px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 class="section-title" style="margin-bottom: 0;">
+                                <i class="fa-solid fa-calendar-days"></i> Calendário de Consultas
+                            </h3>
+                            <div id="calendar-month-year" style="font-weight: 600; font-size: 1.1rem; color: var(--primary-color);"></div>
+                        </div>
+
+                        <div id="calendar-container" class="calendar-grid">
+                            <!-- Calendar will be generated here -->
+                        </div>
+                        
+                        <div id="day-consultations" style="margin-top: 1.5rem;">
+                            <h4 style="font-size: 0.95rem; color: #666; margin-bottom: 0.8rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Consultas para o dia selecionado</h4>
+                            <div id="day-list" class="clients-container">
+                                <div class="empty-state" style="padding: 1rem;">
+                                    <p style="font-size: 0.85rem;">Selecione um dia no calendário para ver os detalhes.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Tab 2: Meus Clientes -->
+        <div id="tab-clientes" class="tab-pane">
+            <div class="glass-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 class="section-title" style="margin-bottom: 0;">
+                        <i class="fa-solid fa-address-book"></i> Cadastro Geral de Clientes
+                    </h3>
+                    <div class="input-wrapper" style="width: 300px;">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="search-client" placeholder="Buscar cliente por nome...">
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Email</th>
+                                <th>Anamnese</th>
+                                <th>Última Consulta</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-summary-table">
+                            <!-- Data injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

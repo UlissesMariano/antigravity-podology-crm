@@ -1,0 +1,11 @@
+sqlite3 database.db
+. tables
+
+.mode column
+.headers on
+SELECT * FROM clientes;
+
+
+.exit
+
+cloudflared tunnel --url http://127.0.0.1:8501
