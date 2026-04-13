@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch(`${API_URL}/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        login: username, 
+                    body: JSON.stringify({
+                        login: username,
                         senha: password,
                         nome_completo: document.getElementById('register-name').value.trim()
                     })
@@ -133,6 +133,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const calendarContainer = document.getElementById('calendar-container');
         const calendarMonthYear = document.getElementById('calendar-month-year');
         const dayList = document.getElementById('day-list');
+        const timeSelect = document.getElementById('client-time');
+
+        if (timeSelect) {
+            for (let h = 8; h <= 20; h++) {
+                for (let m = 0; m < 60; m += 5) {
+                    if (h === 20 && m > 0) continue; // max 20:00
+                    const hh = String(h).padStart(2, '0');
+                    const mm = String(m).padStart(2, '0');
+                    const timeString = `${hh}:${mm}`;
+                    const opt = document.createElement('option');
+                    opt.value = timeString;
+                    opt.textContent = timeString;
+                    timeSelect.appendChild(opt);
+                }
+            }
+        }
 
         let allClients = []; // Global copy for searching and calendar
 
@@ -143,10 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const target = btn.getAttribute('data-tab');
-                
+
                 tabBtns.forEach(b => b.classList.remove('active'));
                 tabPanes.forEach(p => p.classList.remove('active'));
-                
+
                 btn.classList.add('active');
                 document.getElementById(target).classList.add('active');
 
@@ -219,20 +235,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.className = 'client-card';
                 item.style.padding = '1rem';
                 item.innerHTML = `
-                    <div style="font-weight: 600;">${time} - ${c.nome}</div>
-                    <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">${c.telefone} | ${c.anamnese}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div style="font-weight: 600;">${time} - ${c.nome}</div>
+                            <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">${c.telefone} | ${c.anamnese}</div>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteAgendamento(${c.id})" title="Excluir este agendamento" style="padding: 0.3rem 0.6rem; font-size: 0.85rem;"><i class="fa-solid fa-trash"></i></button>
+                    </div>
                 `;
                 dayList.appendChild(item);
             });
         };
 
+        window.deleteAgendamento = async (id) => {
+            if(confirm("Deseja realmente excluir este agendamento?")) {
+                try {
+                    await fetch(`${API_URL}/clientes/${id}`, { method: 'DELETE' });
+                    loadClients();
+                    loadClientsSummary();
+                } catch(e) { console.error("Erro ao deletar agendamento:", e); }
+            }
+        };
+
         // --- CLIENT SUMMARY LOGIC ---
+        let currentResumo = [];
+        let sortCol = '';
+        let sortAsc = true;
+
         const loadClientsSummary = async () => {
             try {
                 const res = await fetch(`${API_URL}/clientes/resumo?admin_id=${session.id}`);
                 if (res.ok) {
-                    const resumo = await res.json();
-                    renderClientsSummary(resumo);
+                    currentResumo = await res.json();
+                    renderClientsSummary(currentResumo);
                 }
             } catch (e) {
                 console.error("Erro ao carregar resumo", e);
@@ -241,20 +276,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const renderClientsSummary = (resumo) => {
             clientsSummaryTable.innerHTML = '';
-            resumo.forEach(c => {
+            resumo.forEach((c, index) => {
                 const lastDate = new Date(c.data_ultima_consulta).toLocaleDateString('pt-BR');
                 const row = document.createElement('tr');
                 row.innerHTML = `
+                    <td style="color: #888; font-size: 0.9em;">#${index + 1}</td>
                     <td><strong>${c.nome}</strong></td>
                     <td>${c.telefone}</td>
                     <td>${c.email || '-'}</td>
                     <td style="font-size: 0.8rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.anamnese}</td>
                     <td>${lastDate}</td>
                     <td><span style="background: var(--primary-light); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;">${c.total_consultas}</span></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteClientAll('${c.telefone}')" title="Apagar Cliente e todos os seus agendamentos"><i class="fa-solid fa-trash"></i></button></td>
                 `;
                 clientsSummaryTable.appendChild(row);
             });
         };
+
+        window.deleteClientAll = async (telefone) => {
+            if(confirm("ATENÇÃO: Você deseja excluir este cliente e TODOS os agendamentos registrados para este telefone?")) {
+                try {
+                    await fetch(`${API_URL}/clientes/telefone/${encodeURIComponent(telefone)}?admin_id=${session.id}`, { method: 'DELETE' });
+                    loadClientsSummary();
+                    loadClients();
+                } catch(e) { console.error("Erro ao deletar cliente:", e); }
+            }
+        };
+
+        document.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const sortKey = th.getAttribute('data-sort');
+                if (sortCol === sortKey) {
+                    sortAsc = !sortAsc;
+                } else {
+                    sortCol = sortKey;
+                    sortAsc = true;
+                }
+
+                const sorted = [...currentResumo].sort((a, b) => {
+                    let valA, valB;
+                    if (sortKey === 'nome') {
+                        valA = a.nome.toLowerCase(); valB = b.nome.toLowerCase();
+                    } else if (sortKey === 'data') {
+                        valA = new Date(a.data_ultima_consulta).getTime(); valB = new Date(b.data_ultima_consulta).getTime();
+                    } else if (sortKey === 'total') {
+                        valA = a.total_consultas; valB = b.total_consultas;
+                    }
+
+                    if (valA < valB) return sortAsc ? -1 : 1;
+                    if (valA > valB) return sortAsc ? 1 : -1;
+                    return 0;
+                });
+
+                renderClientsSummary(sorted);
+            });
+        });
 
         // Load all clients for calendar
         const loadClients = async () => {
@@ -269,6 +345,49 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        const clientPhoneInput = document.getElementById('client-phone');
+        clientPhoneInput.addEventListener('blur', async (e) => {
+            const phone = e.target.value.trim();
+            if (!phone) {
+                const notice = document.getElementById('recurrent-client-notice');
+                if (notice) notice.remove();
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/clientes/lookup?admin_id=${session.id}&telefone=${encodeURIComponent(phone)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.nome) {
+                        document.getElementById('client-name').value = data.nome;
+                        if (data.email) {
+                            document.getElementById('client-email').value = data.email;
+                        }
+                        const anamneseEl = document.getElementById('client-anamnese');
+                        if (data.anamnese && !anamneseEl.value) {
+                            anamneseEl.value = data.anamnese;
+                        }
+
+                        let notice = document.getElementById('recurrent-client-notice');
+                        if (!notice) {
+                            notice = document.createElement('div');
+                            notice.id = 'recurrent-client-notice';
+                            notice.style.color = '#2e7d32';
+                            notice.style.fontSize = '0.85rem';
+                            notice.style.marginTop = '0.5rem';
+                            notice.style.fontWeight = '600';
+                            notice.innerHTML = '<i class="fa-solid fa-star"></i> Cliente Recorrente Identificado!';
+                            clientPhoneInput.parentElement.parentElement.appendChild(notice);
+                        }
+                    } else {
+                        const notice = document.getElementById('recurrent-client-notice');
+                        if (notice) notice.remove();
+                    }
+                }
+            } catch (err) {
+                console.error("Erro no lookup", err);
+            }
+        });
+
         // Save new client (API) + their first atendimento automatically if reason is provided
         clientForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -277,11 +396,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const phone = document.getElementById('client-phone').value.trim();
             const email = document.getElementById('client-email').value.trim();
             const anamnese = document.getElementById('client-anamnese').value.trim();
-            const dateTimeInput = document.getElementById('client-date-time').value;
+            const dateInput = document.getElementById('client-date').value;
+            const timeInput = document.getElementById('client-time').value;
 
-            if (!name || !phone || !anamnese || !dateTimeInput) return;
+            if (!name || !phone || !anamnese || !dateInput || !timeInput) return;
+
+            const dateTimeInput = `${dateInput}T${timeInput}`;
 
             // 1. Validate time range (06h to 20h)
+            // No longer strictly needed since HTML handles it, but keep backend validation as fallback
             const consultDate = new Date(dateTimeInput);
             const hour = consultDate.getHours();
             if (hour < 6 || hour >= 21) {
@@ -296,8 +419,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch(`${API_URL}/clientes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        admin_id: session.id, 
+                    body: JSON.stringify({
+                        admin_id: session.id,
                         nome: name,
                         telefone: phone,
                         email: email,

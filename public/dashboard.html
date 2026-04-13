@@ -61,18 +61,18 @@
 
                         <form id="add-client-form">
                             <div class="input-group">
-                                <label for="client-name">Nome Completo</label>
-                                <div class="input-wrapper">
-                                    <i class="fa-regular fa-user"></i>
-                                    <input type="text" id="client-name" placeholder="Ex: Maria Oliveira" required>
-                                </div>
-                            </div>
-
-                            <div class="input-group">
                                 <label for="client-phone">Telefone</label>
                                 <div class="input-wrapper">
                                     <i class="fa-solid fa-phone"></i>
                                     <input type="tel" id="client-phone" placeholder="Ex: (11) 98888-7777" required>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="client-name">Nome Completo</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-regular fa-user"></i>
+                                    <input type="text" id="client-name" placeholder="Ex: Maria Oliveira" required>
                                 </div>
                             </div>
 
@@ -96,10 +96,20 @@
                             </div>
 
                             <div class="input-group">
-                                <label for="client-date-time">Data e Hora da Consulta</label>
+                                <label for="client-date">Data da Consulta</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-regular fa-calendar"></i>
+                                    <input type="date" id="client-date" required>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="client-time">Hora da Consulta</label>
                                 <div class="input-wrapper">
                                     <i class="fa-regular fa-clock"></i>
-                                    <input type="datetime-local" id="client-date-time" required>
+                                    <select id="client-time" required style="width: 100%; padding: 0.85rem 1rem 0.85rem 2.8rem; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; background: rgba(255,255,255,0.7); outline: none; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.95rem;">
+                                        <option value="" disabled selected>Selecione um horário</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -155,12 +165,14 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Nome</th>
+                                <th>Nº</th>
+                                <th class="sortable" data-sort="nome" style="cursor: pointer;">Nome <i class="fa-solid fa-sort"></i></th>
                                 <th>Telefone</th>
                                 <th>Email</th>
                                 <th>Anamnese</th>
-                                <th>Última Consulta</th>
-                                <th>Total</th>
+                                <th class="sortable" data-sort="data" style="cursor: pointer;">Última Consulta <i class="fa-solid fa-sort"></i></th>
+                                <th class="sortable" data-sort="total" style="cursor: pointer;">Total <i class="fa-solid fa-sort"></i></th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="clients-summary-table">
@@ -172,7 +184,7 @@
         </div>
     </main>
 
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=3"></script>
 </body>
 
 </html>

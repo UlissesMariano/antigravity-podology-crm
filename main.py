@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import sqlite3
 import os
+import re
 
 app = FastAPI(title="Podology CRM API")
 
@@ -110,14 +111,52 @@ def login_admin(admin: AdminLogin):
 def create_cliente(cliente: ClienteCreate):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+    
+    telefone = re.sub(r'\D', '', cliente.telefone)
+    if len(telefone) <= 9 and len(telefone) > 0:
+        telefone = "11" + telefone
+
     cursor.execute(
         "INSERT INTO clientes (admin_id, nome, telefone, email, anamnese, data_agendamento, data_hora_consulta) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-        (cliente.admin_id, cliente.nome, cliente.telefone, cliente.email, cliente.anamnese, cliente.data_agendamento, cliente.data_hora_consulta)
+        (cliente.admin_id, cliente.nome, telefone, cliente.email, cliente.anamnese, cliente.data_agendamento, cliente.data_hora_consulta)
     )
     conn.commit()
     cliente_id = cursor.lastrowid
     conn.close()
     return {"id": cliente_id, "admin_id": cliente.admin_id, "nome": cliente.nome}
+
+@app.get("/api/clientes/lookup")
+def lookup_cliente(admin_id: int, telefone: str):
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    tel_num = re.sub(r'\D', '', telefone)
+    if len(tel_num) <= 9 and len(tel_num) > 0:
+        tel_num = "11" + tel_num
+
+    cursor.execute("""
+        SELECT nome, email, anamnese, telefone
+        FROM clientes
+        WHERE admin_id = ?
+        ORDER BY data_hora_consulta DESC
+    """, (admin_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    for row in rows:
+        db_tel = re.sub(r'\D', '', row['telefone'])
+        if len(db_tel) <= 9 and len(db_tel) > 0:
+            db_tel = "11" + db_tel
+            
+        if db_tel == tel_num:
+            return {
+                "nome": row["nome"],
+                "email": row["email"],
+                "anamnese": row["anamnese"]
+            }
+            
+    return {}
 
 @app.get("/api/clientes")
 def get_clientes(admin_id: int):
@@ -160,6 +199,15 @@ def delete_cliente(cliente_id: int):
     conn.commit()
     conn.close()
     return {"message": "Cliente removido com sucesso."}
+
+@app.delete("/api/clientes/telefone/{telefone}")
+def delete_cliente_all(telefone: str, admin_id: int):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM clientes WHERE telefone = ? AND admin_id = ?", (telefone, admin_id))
+    conn.commit()
+    conn.close()
+    return {"message": "Todos os registros do cliente foram removidos com sucesso."}
 
 # --- Serve Static Files ---
 # Mount the "public" directory to serve the index.html and dashboard.html
